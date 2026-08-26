@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>PowerProtocolGateway Console</title>
+<style>
+body{font-family:"Microsoft YaHei",Arial,sans-serif;margin:24px;background:#f2f4f7;color:#222}
+h1{font-size:20px}
+.panel{background:#fff;border:1px solid #d9dee5;border-radius:6px;padding:14px;margin-bottom:14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px}
+.card{border:1px solid #dfe3e8;border-radius:4px;padding:10px}
+.state{font-weight:bold}
+.running{color:#167b34}.fault{color:#c0342d}.idle{color:#8a8f98}
+table{border-collapse:collapse;width:100%}
+td,th{border:1px solid #dfe3e8;padding:6px 8px;text-align:left;font-size:13px}
+button{margin-right:8px;padding:5px 12px;border:1px solid #c7cdd4;border-radius:4px;background:#fff;cursor:pointer}
+</style>
+</head>
+<body>
+<h1>电力规约转换与遥测前置网关</h1>
+<div class="panel">
+<button onclick="refresh()">刷新状态</button>
+<span id="ts"></span>
+</div>
+<div class="grid" id="cards"></div>
+<div class="panel">
+<h2>通道状态</h2>
+<table id="channels"><thead><tr><th>通道</th><th>状态</th><th>会话</th><th>对时序号</th><th>帧数</th><th>错误</th></tr></thead><tbody></tbody></table>
+</div>
+<div class="panel">
+<h2>点表与版本</h2>
+<table id="versions"><thead><tr><th>版本</th><th>状态</th><th>规约</th><th>点表</th></tr></thead><tbody></tbody></table>
+</div>
+<script>
+async function refresh(){
+  const res = await fetch("/api/status");
+  const data = await res.json();
+  document.getElementById("ts").textContent = "更新时间 " + new Date().toLocaleTimeString();
+  const cards = document.getElementById("cards");
+  cards.innerHTML = "";
+  data.channels.forEach(ch => {
+    const div = document.createElement("div");
+    div.className = "card";
+    div.innerHTML = "<div>" + ch.id + "</div><div class=\"state " + ch.state + "\">" + ch.state + "</div>";
+    cards.appendChild(div);
+  });
+  const ct = document.querySelector("#channels tbody");
+  ct.innerHTML = "";
+  data.channels.forEach(ch => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = "<td>" + ch.id + "</td><td>" + ch.state + "</td><td>" + ch.session + "</td><td>" + ch.syncSeq + "</td><td>" + ch.frames + "</td><td>" + ch.errors + "</td>";
+    ct.appendChild(tr);
+  });
+  const vt = document.querySelector("#versions tbody");
+  vt.innerHTML = "";
+  data.versions.forEach(v => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = "<td>" + v.id + "</td><td>" + v.state + "</td><td>" + v.proto + "</td><td>" + v.table + "</td>";
+    vt.appendChild(tr);
+  });
+}
+refresh();
+</script>
+</body>
+</html>
